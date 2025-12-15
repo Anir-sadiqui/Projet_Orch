@@ -1,9 +1,5 @@
 package com.membership.users.infrastructure.exception;
 
-/**
- * Exception levée lorsqu'une ressource n'est pas trouvée.
- * Best practice : Exceptions métier spécifiques pour un meilleur traitement
- */
 public class ResourceNotFoundException extends RuntimeException {
     
     public ResourceNotFoundException(String message) {

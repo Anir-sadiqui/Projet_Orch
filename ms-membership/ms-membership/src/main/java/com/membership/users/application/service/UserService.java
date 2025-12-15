@@ -1,12 +1,5 @@
 package com.membership.users.application.service;
 
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.MeterRegistry;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.membership.users.application.dto.UserRequestDTO;
 import com.membership.users.application.dto.UserResponseDTO;
 import com.membership.users.application.mapper.UserMapper;
@@ -14,19 +7,15 @@ import com.membership.users.domain.entity.User;
 import com.membership.users.domain.repository.UserRepository;
 import com.membership.users.infrastructure.exception.ResourceAlreadyExistsException;
 import com.membership.users.infrastructure.exception.ResourceNotFoundException;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
-/**
- * Service pour la gestion des utilisateurs.
- * Best practices :
- * - @Transactional pour la gestion des transactions
- * - Logging avec SLF4J
- * - Métriques personnalisées avec Micrometer
- * - Gestion d'erreurs explicite avec exceptions métier
- * - Séparation de la logique métier du contrôleur
- */
 @Service
 @Transactional(readOnly = true)
 public class UserService {
@@ -35,172 +24,121 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
-    private final MeterRegistry meterRegistry;
 
-    public UserService(UserRepository userRepository, UserMapper userMapper, MeterRegistry meterRegistry) {
+    private final Counter usersCreated;
+    private final Counter usersUpdated;
+    private final Counter usersDeleted;
+
+    public UserService(UserRepository userRepository,
+                       UserMapper userMapper,
+                       MeterRegistry meterRegistry) {
+
         this.userRepository = userRepository;
         this.userMapper = userMapper;
-        this.meterRegistry = meterRegistry;
+
+        this.usersCreated = buildCounter(meterRegistry, "users.created", "Nombre d'utilisateurs créés");
+        this.usersUpdated = buildCounter(meterRegistry, "users.updated", "Nombre d'utilisateurs mis à jour");
+        this.usersDeleted = buildCounter(meterRegistry, "users.deleted", "Nombre d'utilisateurs supprimés");
     }
 
-    /**
-     * Récupère tous les utilisateurs
-     */
+
     public List<UserResponseDTO> getAllUsers() {
         log.debug("Récupération de tous les utilisateurs");
-        
-        List<User> users = userRepository.findAll();
-        
-        log.info("Nombre d'utilisateurs récupérés: {}", users.size());
-        
-        return users.stream()
-                .map(userMapper::toDto)
-                .collect(Collectors.toList());
+        return mapToDto(userRepository.findAll());
     }
 
-    /**
-     * Récupère un utilisateur par son ID
-     */
     public UserResponseDTO getUserById(Long id) {
-        log.debug("Récupération de l'utilisateur avec l'ID: {}", id);
-        
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
-        
-        log.info("Utilisateur trouvé: {}", user.getEmail());
-        
-        return userMapper.toDto(user);
+        log.debug("Récupération utilisateur id={}", id);
+        return userMapper.toDto(findUserById(id));
     }
 
-    /**
-     * Crée un nouvel utilisateur
-     */
+    public List<UserResponseDTO> getActiveUsers() {
+        log.debug("Récupération des utilisateurs actifs");
+        return mapToDto(userRepository.findByActiveTrue());
+    }
+
+    public List<UserResponseDTO> searchUsersByLastName(String lastName) {
+        log.debug("Recherche utilisateurs nom={}", lastName);
+        return mapToDto(userRepository.searchByLastName(lastName));
+    }
+
+
     @Transactional
-    public UserResponseDTO createUser(UserRequestDTO userRequestDTO) {
-        log.debug("Création d'un nouvel utilisateur: {}", userRequestDTO.getEmail());
-        
-        // Vérifier si l'email existe déjà
-        if (userRepository.existsByEmail(userRequestDTO.getEmail())) {
-            log.warn("Tentative de création d'un utilisateur avec un email existant: {}", 
-                    userRequestDTO.getEmail());
-            throw new ResourceAlreadyExistsException("User", "email", userRequestDTO.getEmail());
-        }
-        
-        User user = userMapper.toEntity(userRequestDTO);
-        User savedUser = userRepository.save(user);
-        
-        // Métrique personnalisée
-        Counter.builder("users.created")
-                .description("Nombre d'utilisateurs créés")
-                .tag("type", "user")
-                .register(meterRegistry)
-                .increment();
-        
-        log.info("Utilisateur créé avec succès: ID={}, Email={}", savedUser.getId(), savedUser.getEmail());
-        
+    public UserResponseDTO createUser(UserRequestDTO dto) {
+        log.debug("Création utilisateur email={}", dto.getEmail());
+
+        assertEmailNotExists(dto.getEmail());
+
+        User savedUser = userRepository.save(userMapper.toEntity(dto));
+        usersCreated.increment();
+
+        log.info("Utilisateur créé id={}, email={}", savedUser.getId(), savedUser.getEmail());
         return userMapper.toDto(savedUser);
     }
 
-    /**
-     * Met à jour un utilisateur existant
-     */
     @Transactional
-    public UserResponseDTO updateUser(Long id, UserRequestDTO userRequestDTO) {
-        log.debug("Mise à jour de l'utilisateur avec l'ID: {}", id);
-        
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
-        
-        // Vérifier si le nouvel email existe déjà (sauf si c'est le même)
-        if (!user.getEmail().equals(userRequestDTO.getEmail()) 
-                && userRepository.existsByEmail(userRequestDTO.getEmail())) {
-            log.warn("Tentative de mise à jour avec un email existant: {}", userRequestDTO.getEmail());
-            throw new ResourceAlreadyExistsException("User", "email", userRequestDTO.getEmail());
-        }
-        
-        userMapper.updateEntityFromDto(userRequestDTO, user);
-        User updatedUser = userRepository.save(user);
-        
-        // Métrique personnalisée
-        Counter.builder("users.updated")
-                .description("Nombre d'utilisateurs mis à jour")
-                .tag("type", "user")
-                .register(meterRegistry)
-                .increment();
-        
-        log.info("Utilisateur mis à jour avec succès: ID={}, Email={}", 
-                updatedUser.getId(), updatedUser.getEmail());
-        
-        return userMapper.toDto(updatedUser);
+    public UserResponseDTO updateUser(Long id, UserRequestDTO dto) {
+        log.debug("Mise à jour utilisateur id={}", id);
+
+        User user = findUserById(id);
+        assertEmailUpdatable(user, dto.getEmail());
+
+        userMapper.updateEntityFromDto(dto, user);
+        usersUpdated.increment();
+
+        log.info("Utilisateur mis à jour id={}, email={}", user.getId(), user.getEmail());
+        return userMapper.toDto(user);
     }
 
-    /**
-     * Supprime un utilisateur
-     */
     @Transactional
     public void deleteUser(Long id) {
-        log.debug("Suppression de l'utilisateur avec l'ID: {}", id);
-        
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
-        
+        log.debug("Suppression utilisateur id={}", id);
+
+        User user = findUserById(id);
         userRepository.delete(user);
-        
-        // Métrique personnalisée
-        Counter.builder("users.deleted")
-                .description("Nombre d'utilisateurs supprimés")
-                .tag("type", "user")
-                .register(meterRegistry)
-                .increment();
-        
-        log.info("Utilisateur supprimé avec succès: ID={}, Email={}", id, user.getEmail());
+        usersDeleted.increment();
+
+        log.info("Utilisateur supprimé id={}, email={}", id, user.getEmail());
     }
 
-    /**
-     * Recherche des utilisateurs par nom
-     */
-    public List<UserResponseDTO> searchUsersByLastName(String lastName) {
-        log.debug("Recherche d'utilisateurs avec le nom: {}", lastName);
-        
-        List<User> users = userRepository.searchByLastName(lastName);
-        
-        log.info("Nombre d'utilisateurs trouvés: {}", users.size());
-        
-        return users.stream()
-                .map(userMapper::toDto)
-                .collect(Collectors.toList());
-    }
-
-    /**
-     * Récupère tous les utilisateurs actifs
-     */
-    public List<UserResponseDTO> getActiveUsers() {
-        log.debug("Récupération des utilisateurs actifs");
-        
-        List<User> users = userRepository.findByActiveTrue();
-        
-        log.info("Nombre d'utilisateurs actifs: {}", users.size());
-        
-        return users.stream()
-                .map(userMapper::toDto)
-                .collect(Collectors.toList());
-    }
-
-    /**
-     * Désactive un utilisateur (soft delete)
-     */
     @Transactional
     public UserResponseDTO deactivateUser(Long id) {
-        log.debug("Désactivation de l'utilisateur avec l'ID: {}", id);
-        
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
-        
+        log.debug("Désactivation utilisateur id={}", id);
+
+        User user = findUserById(id);
         user.setActive(false);
-        User deactivatedUser = userRepository.save(user);
-        
-        log.info("Utilisateur désactivé avec succès: ID={}, Email={}", id, user.getEmail());
-        
-        return userMapper.toDto(deactivatedUser);
+
+        log.info("Utilisateur désactivé id={}, email={}", id, user.getEmail());
+        return userMapper.toDto(user);
+    }
+
+
+    private User findUserById(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
+    }
+
+    private void assertEmailNotExists(String email) {
+        if (userRepository.existsByEmail(email)) {
+            throw new ResourceAlreadyExistsException("User", "email", email);
+        }
+    }
+
+    private void assertEmailUpdatable(User user, String newEmail) {
+        if (!user.getEmail().equals(newEmail) && userRepository.existsByEmail(newEmail)) {
+            throw new ResourceAlreadyExistsException("User", "email", newEmail);
+        }
+    }
+
+    private List<UserResponseDTO> mapToDto(List<User> users) {
+        log.info("Nombre d'utilisateurs récupérés: {}", users.size());
+        return users.stream().map(userMapper::toDto).toList();
+    }
+
+    private Counter buildCounter(MeterRegistry registry, String name, String description) {
+        return Counter.builder(name)
+                .description(description)
+                .tag("type", "user")
+                .register(registry);
     }
 }

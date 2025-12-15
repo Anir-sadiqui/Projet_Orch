@@ -10,6 +10,5 @@ public class FaviconController {
     @GetMapping("favicon.ico")
     @ResponseBody
     public void dummyFavicon() {
-        // No operation, just prevents 404            
     }
 }

@@ -8,14 +8,7 @@ import org.springframework.stereotype.Component;
 
 import com.membership.users.domain.repository.UserRepository;
 
-/**
- * Health Indicator personnalisé pour vérifier l'état de la base de données.
- * Best practices :
- * - Implémente HealthIndicator pour les checks personnalisés
- * - Fournit des détails utiles pour le debugging
- * - Gère les exceptions proprement
- * - Utilisé par /actuator/health
- */
+
 @Component
 public class DatabaseHealthIndicator implements HealthIndicator {
 
@@ -30,7 +23,6 @@ public class DatabaseHealthIndicator implements HealthIndicator {
     @Override
     public Health health() {
         try {
-            // Vérifie la connexion à la base de données
             long userCount = userRepository.count();
             long activeUserCount = userRepository.countActiveUsers();
             

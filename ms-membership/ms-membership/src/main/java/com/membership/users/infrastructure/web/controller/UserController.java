@@ -23,20 +23,7 @@ import com.membership.users.application.service.UserService;
 import java.net.URI;
 import java.util.List;
 
-/**
- * Contrôleur REST pour la gestion des utilisateurs.
- * 
- * Best practices REST :
- * - Utilisation correcte des verbes HTTP (GET, POST, PUT, DELETE, PATCH)
- * - Codes de statut HTTP appropriés (200, 201, 204, 404, etc.)
- * - URI RESTful (/api/v1/users, /api/v1/users/{id})
- * - Content negotiation avec MediaType
- * - Documentation OpenAPI/Swagger
- * - Validation des données avec @Valid
- * - ResponseEntity pour un contrôle total de la réponse
- * - Location header pour les ressources créées
- * - Séparation des préoccupations (délégation au service)
- */
+
 @RestController
 @RequestMapping("/api/v1/users")
 @Tag(name = "Users", description = "API de gestion des utilisateurs")
@@ -50,12 +37,6 @@ public class UserController {
         this.userService = userService;
     }
 
-    /**
-     * GET /api/v1/users
-     * Récupère la liste de tous les utilisateurs
-     * 
-     * @return Liste des utilisateurs avec code 200 OK
-     */
     @Operation(summary = "Récupérer tous les utilisateurs", 
                description = "Retourne la liste complète de tous les utilisateurs enregistrés")
     @ApiResponses(value = {
@@ -72,13 +53,6 @@ public class UserController {
         return ResponseEntity.ok(users);
     }
 
-    /**
-     * GET /api/v1/users/{id}
-     * Récupère un utilisateur par son ID
-     * 
-     * @param id L'identifiant de l'utilisateur
-     * @return L'utilisateur avec code 200 OK ou 404 NOT FOUND
-     */
     @Operation(summary = "Récupérer un utilisateur par ID", 
                description = "Retourne un utilisateur spécifique basé sur son ID")
     @ApiResponses(value = {
@@ -100,13 +74,7 @@ public class UserController {
         return ResponseEntity.ok(user);
     }
 
-    /**
-     * POST /api/v1/users
-     * Crée un nouvel utilisateur
-     * 
-     * @param userRequestDTO Les données de l'utilisateur à créer
-     * @return L'utilisateur créé avec code 201 CREATED et Location header
-     */
+
     @Operation(summary = "Créer un nouvel utilisateur", 
                description = "Crée un nouvel utilisateur avec les données fournies")
     @ApiResponses(value = {
@@ -127,8 +95,7 @@ public class UserController {
         log.info("POST /api/v1/users - Création d'un utilisateur: {}", userRequestDTO.getEmail());
         
         UserResponseDTO createdUser = userService.createUser(userRequestDTO);
-        
-        // Best practice REST : retourner l'URI de la ressource créée dans le header Location
+
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
                 .path("/{id}")
@@ -140,14 +107,7 @@ public class UserController {
                 .body(createdUser);
     }
 
-    /**
-     * PUT /api/v1/users/{id}
-     * Met à jour complètement un utilisateur existant
-     * 
-     * @param id L'identifiant de l'utilisateur
-     * @param userRequestDTO Les nouvelles données de l'utilisateur
-     * @return L'utilisateur mis à jour avec code 200 OK
-     */
+
     @Operation(summary = "Mettre à jour un utilisateur", 
                description = "Met à jour complètement les informations d'un utilisateur existant")
     @ApiResponses(value = {
@@ -177,13 +137,6 @@ public class UserController {
         return ResponseEntity.ok(updatedUser);
     }
 
-    /**
-     * DELETE /api/v1/users/{id}
-     * Supprime un utilisateur
-     * 
-     * @param id L'identifiant de l'utilisateur
-     * @return Code 204 NO CONTENT
-     */
     @Operation(summary = "Supprimer un utilisateur", 
                description = "Supprime définitivement un utilisateur")
     @ApiResponses(value = {
@@ -200,18 +153,10 @@ public class UserController {
         log.info("DELETE /api/v1/users/{} - Suppression de l'utilisateur", id);
         
         userService.deleteUser(id);
-        
-        // Best practice REST : 204 No Content pour une suppression réussie
+
         return ResponseEntity.noContent().build();
     }
 
-    /**
-     * GET /api/v1/users/search?lastName={lastName}
-     * Recherche des utilisateurs par nom
-     * 
-     * @param lastName Le nom à rechercher
-     * @return Liste des utilisateurs correspondants
-     */
     @Operation(summary = "Rechercher des utilisateurs par nom", 
                description = "Recherche des utilisateurs dont le nom contient la chaîne spécifiée")
     @ApiResponses(value = {
@@ -231,12 +176,6 @@ public class UserController {
         return ResponseEntity.ok(users);
     }
 
-    /**
-     * GET /api/v1/users/active
-     * Récupère tous les utilisateurs actifs
-     * 
-     * @return Liste des utilisateurs actifs
-     */
     @Operation(summary = "Récupérer les utilisateurs actifs", 
                description = "Retourne la liste de tous les utilisateurs actifs")
     @ApiResponses(value = {
@@ -253,13 +192,7 @@ public class UserController {
         return ResponseEntity.ok(users);
     }
 
-    /**
-     * PATCH /api/v1/users/{id}/deactivate
-     * Désactive un utilisateur (soft delete)
-     * 
-     * @param id L'identifiant de l'utilisateur
-     * @return L'utilisateur désactivé
-     */
+
     @Operation(summary = "Désactiver un utilisateur", 
                description = "Désactive un utilisateur sans le supprimer définitivement")
     @ApiResponses(value = {

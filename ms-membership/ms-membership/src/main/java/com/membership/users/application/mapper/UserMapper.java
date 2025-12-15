@@ -1,25 +1,18 @@
 package com.membership.users.application.mapper;
 
-import org.springframework.stereotype.Component;
-
 import com.membership.users.application.dto.UserRequestDTO;
 import com.membership.users.application.dto.UserResponseDTO;
 import com.membership.users.domain.entity.User;
+import org.springframework.stereotype.Component;
 
-/**
- * Mapper pour convertir entre User et ses DTOs.
- * Best practices :
- * - Séparation de la logique de mapping
- * - Conversion centralisée
- * - Facilite les tests unitaires
- */
 @Component
 public class UserMapper {
 
-    /**
-     * Convertit un UserRequestDTO en entité User
-     */
     public User toEntity(UserRequestDTO dto) {
+        if (dto == null) {
+            return null;
+        }
+
         return User.builder()
                 .firstName(dto.getFirstName())
                 .lastName(dto.getLastName())
@@ -28,10 +21,11 @@ public class UserMapper {
                 .build();
     }
 
-    /**
-     * Convertit une entité User en UserResponseDTO
-     */
     public UserResponseDTO toDto(User user) {
+        if (user == null) {
+            return null;
+        }
+
         return UserResponseDTO.builder()
                 .id(user.getId())
                 .firstName(user.getFirstName())
@@ -43,10 +37,11 @@ public class UserMapper {
                 .build();
     }
 
-    /**
-     * Met à jour une entité User existante avec les données du DTO
-     */
     public void updateEntityFromDto(UserRequestDTO dto, User user) {
+        if (dto == null || user == null) {
+            return;
+        }
+
         user.setFirstName(dto.getFirstName());
         user.setLastName(dto.getLastName());
         user.setEmail(dto.getEmail());
