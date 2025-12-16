@@ -1,4 +1,4 @@
-package com.membership.product.application.dto;
+package com.membership.users.application.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -8,10 +8,18 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * DTO pour la création d'un utilisateur.
+ * Best practices :
+ * - Séparation des DTOs Request/Response
+ * - Validation au niveau DTO
+ * - Utilisation de Builder pattern
+ * - Pas d'exposition de l'entité directement dans l'API
+ */
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class UserRequestDTO {
 
     @NotBlank(message = "Le prénom ne peut pas être vide")

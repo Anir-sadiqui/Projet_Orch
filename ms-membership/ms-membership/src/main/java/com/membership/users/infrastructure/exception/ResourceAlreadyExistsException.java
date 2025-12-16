@@ -1,6 +1,9 @@
-package com.membership.product.infrastructure.exception;
+package com.membership.users.infrastructure.exception;
 
-
+/**
+ * Exception levée lorsqu'on tente de créer une ressource qui existe déjà.
+ * Best practice : Exceptions métier spécifiques
+ */
 public class ResourceAlreadyExistsException extends RuntimeException {
     
     public ResourceAlreadyExistsException(String message) {

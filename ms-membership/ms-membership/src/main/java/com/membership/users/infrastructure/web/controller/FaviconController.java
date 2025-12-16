@@ -1,4 +1,4 @@
-package com.membership.product.infrastructure.web.controller;
+package com.membership.users.infrastructure.web.controller;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,5 +10,6 @@ public class FaviconController {
     @GetMapping("favicon.ico")
     @ResponseBody
     public void dummyFavicon() {
+        // No operation, just prevents 404            
     }
 }

@@ -40,8 +40,6 @@ public class OrderService {
         this.orderMetrics = orderMetrics;
     }
 
-
-
     public OrderResponseDTO createOrder(OrderRequestDTO dto) {
 
 
@@ -63,6 +61,7 @@ public class OrderService {
         order.setUpdatedAt(LocalDateTime.now());
 
         BigDecimal totalAmount = BigDecimal.ZERO;
+
 
         for (OrderItemRequestDTO itemDto : dto.getItems()) {
 
@@ -92,8 +91,9 @@ public class OrderService {
 
             productClient.updateStock(
                     product.getId(),
-                    product.getStock() - itemDto.getQuantity()
+                    -itemDto.getQuantity()
             );
+
         }
 
         order.setTotalAmount(totalAmount);
@@ -106,8 +106,6 @@ public class OrderService {
 
         return OrderMapper.toResponse(saved);
     }
-
-
 
     public List<OrderResponseDTO> getAllOrders() {
         return orderRepository.findAll()
@@ -137,8 +135,6 @@ public class OrderService {
                 .collect(Collectors.toList());
     }
 
-
-
     public OrderResponseDTO updateOrderStatus(Long id, OrderStatus newStatus) {
 
         Order order = orderRepository.findById(id)
@@ -160,7 +156,6 @@ public class OrderService {
         return OrderMapper.toResponse(order);
     }
 
-
     public OrderResponseDTO cancelOrder(Long id) {
 
         Order order = orderRepository.findById(id)
@@ -181,12 +176,12 @@ public class OrderService {
 
 
         order.getItems().forEach(item -> {
-            ProductDTO product = productClient.getProduct(item.getProductId());
             productClient.updateStock(
-                    product.getId(),
-                    product.getStock() + item.getQuantity()
+                    item.getProductId(),
+                    item.getQuantity()
             );
         });
+
 
         order.setStatus(OrderStatus.CANCELLED);
         order.setUpdatedAt(LocalDateTime.now());

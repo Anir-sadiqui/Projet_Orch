@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import com.membership.product.application.dto.StockUpdateRequestDTO;
 
 import java.util.List;
+import java.util.Map;
 
 
 @RestController
@@ -100,14 +101,18 @@ public class ProductController {
         );
     }
 
-    @PatchMapping("/{id}/stock")
+    @PutMapping("/{id}/stock")
     public ResponseEntity<Void> updateStock(
             @PathVariable Long id,
-            @Valid @RequestBody StockUpdateRequestDTO dto) {
-
-        productService.updateStock(id, dto.getNewStock());
+            @RequestBody StockUpdateRequestDTO dto
+    ) {
+        productService.updateStock(id, dto.getQuantityChange());
         return ResponseEntity.noContent().build();
     }
+
+
+
+
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {

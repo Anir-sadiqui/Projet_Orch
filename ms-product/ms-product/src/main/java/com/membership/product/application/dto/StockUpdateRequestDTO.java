@@ -1,6 +1,5 @@
 package com.membership.product.application.dto;
 
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
@@ -8,6 +7,7 @@ import lombok.Data;
 public class StockUpdateRequestDTO {
 
     @NotNull
-    @Min(0)
-    private Integer newStock;
+    private Integer quantityChange;
+
+
 }

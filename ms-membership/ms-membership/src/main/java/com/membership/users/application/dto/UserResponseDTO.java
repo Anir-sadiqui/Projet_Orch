@@ -1,4 +1,4 @@
-package com.membership.product.application.dto;
+package com.membership.users.application.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
@@ -8,10 +8,17 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
+/**
+ * DTO pour la réponse d'un utilisateur.
+ * Best practices :
+ * - Séparation Request/Response
+ * - Formatage JSON cohérent pour les dates
+ * - Exposition sélective des champs (pas de données sensibles)
+ */
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class UserResponseDTO {
 
     private Long id;

@@ -1,4 +1,4 @@
-package com.membership.product;
+package com.membership.users;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

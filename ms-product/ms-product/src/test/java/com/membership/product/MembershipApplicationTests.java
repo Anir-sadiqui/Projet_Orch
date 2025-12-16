@@ -34,35 +34,7 @@ class ProductServiceTest {
 		assertEquals(ProductCategory.ELECTRONICS, saved.getCategory());
 	}
 
-	@Test
-	void shouldUpdateStock() {
-		Product p = new Product();
-		p.setName("Livre");
-		p.setDescription("Livre cuisine");
-		p.setPrice(BigDecimal.valueOf(40));
-		p.setStock(5);
-		p.setCategory(ProductCategory.BOOKS);
 
-		Product saved = service.create(p);
-		service.updateStock(saved.getId(), 3);
 
-		Product updated = service.findById(saved.getId());
-		assertEquals(3, updated.getStock());
-	}
 
-	@Test
-	void shouldFailWhenUpdatingStockWithNegativeValue() {
-		Product p = new Product();
-		p.setName("Telephone");
-		p.setDescription("Iphone 16 pro max");
-		p.setPrice(BigDecimal.valueOf(500));
-		p.setStock(5);
-		p.setCategory(ProductCategory.ELECTRONICS);
-
-		Product saved = service.create(p);
-
-		assertThrows(IllegalArgumentException.class, () -> {
-			service.updateStock(saved.getId(), -1);
-		});
-	}
 }

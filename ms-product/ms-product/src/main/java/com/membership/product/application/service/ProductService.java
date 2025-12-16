@@ -5,12 +5,14 @@ import com.membership.product.domain.entity.ProductCategory;
 import com.membership.product.domain.repository.ProductRepository;
 import com.membership.product.infrastructure.exception.ResourceNotFoundException;
 import com.membership.product.infrastructure.metrics.ProductMetrics;
+import lombok.Data;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
+@Data
 @Transactional
 public class ProductService {
 
@@ -64,17 +66,29 @@ public class ProductService {
         return repository.findByStockGreaterThanAndActiveTrue(0);
     }
 
-    public void updateStock(Long id, Integer newStock) {
-        if (newStock < 0) {
-            throw new IllegalArgumentException("Stock cannot be negative");
-        }
-        Product product = findById(id);
-        product.setStock(newStock);
-    }
+
 
     public void delete(Long id) {
         Product product = findById(id);
         throw new IllegalStateException(
                 "Product cannot be deleted if it is part of an order");
     }
+
+
+    @Transactional
+    public void updateStock(Long productId, int quantityChange) {
+
+        Product product = repository.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", productId));
+
+        int newStock = product.getStock() + quantityChange;
+
+        if (newStock < 0) {
+            throw new IllegalArgumentException("Stock négatif interdit");
+        }
+
+        product.setStock(newStock);
+    }
+
+
 }

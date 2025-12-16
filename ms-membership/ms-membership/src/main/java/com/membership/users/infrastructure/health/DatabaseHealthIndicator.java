@@ -1,28 +1,32 @@
-package com.membership.product.infrastructure.health;
+package com.membership.users.infrastructure.health;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.stereotype.Component;
 
-import com.membership.product.domain.repository.UserRepository;
+import com.membership.users.domain.repository.UserRepository;
 
-
+/**
+ * Health Indicator personnalisé pour vérifier l'état de la base de données.
+ * Best practices :
+ * - Implémente HealthIndicator pour les checks personnalisés
+ * - Fournit des détails utiles pour le debugging
+ * - Gère les exceptions proprement
+ * - Utilisé par /actuator/health
+ */
+@Slf4j
 @Component
+@RequiredArgsConstructor
 public class DatabaseHealthIndicator implements HealthIndicator {
 
-    private static final Logger log = LoggerFactory.getLogger(DatabaseHealthIndicator.class);
-
     private final UserRepository userRepository;
-
-    public DatabaseHealthIndicator(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
 
     @Override
     public Health health() {
         try {
+            // Vérifie la connexion à la base de données
             long userCount = userRepository.count();
             long activeUserCount = userRepository.countActiveUsers();
             
