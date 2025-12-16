@@ -1,20 +1,47 @@
-version: '3.8'
+version: "3.9"
 
 services:
+  ms-membership:
+    build: ./ms-membership
+    container_name: ms-membership
+    ports:
+      - "8080:8080"
+    networks:
+      - ecommerce-network
+
+  ms-product:
+    build: ./ms-product
+    container_name: ms-product
+    ports:
+      - "8082:8082"
+    networks:
+      - ecommerce-network
+
+  ms-order:
+    build: ./ms-order
+    container_name: ms-order
+    ports:
+      - "8083:8083"
+    depends_on:
+      - ms-membership
+      - ms-product
+    networks:
+      - ecommerce-network
+
+
+
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
     ports:
       - "9090:9090"
     volumes:
-      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
-    restart: unless-stopped
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - ecommerce-network
 
-  grafana:
-    image: grafana/grafana:latest
-    container_name: grafana
-    ports:
-      - "3000:3000"
-    depends_on:
-      - prometheus
-    restart: unless-stopped
+
+
+networks:
+  ecommerce-network:
+    driver: bridge
