@@ -1,0 +1,191 @@
+{
+  "info": {
+    "name": "Platform E-commerce - Tests complets",
+    "description": "Collection Postman pour tester la plateforme e-commerce microservices.\n\nScénarios inclus :\n1) Scénario complet : création user → création produits → création commande\n2) Tests d'erreur : user inexistant, produit en rupture\n3) Tests happy path de chaque endpoint",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1 - Scénario complet",
+      "item": [
+        {
+          "name": "1.1 - Créer un utilisateur",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8081/api/v1/users",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8081",
+              "path": ["api", "v1", "users"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"john.doe@test.com\"\n}"
+            }
+          }
+        },
+        {
+          "name": "1.2 - Créer un produit",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8082/api/v1/products",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8082",
+              "path": ["api", "v1", "products"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Laptop\",\n  \"price\": 1200,\n  \"stock\": 10\n}"
+            }
+          }
+        },
+        {
+          "name": "1.3 - Créer une commande",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8083/api/v1/orders",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8083",
+              "path": ["api", "v1", "orders"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": 1,\n  \"shippingAddress\": \"10 rue de Paris\",\n  \"items\": [\n    {\n      \"productId\": 1,\n      \"quantity\": 2\n    }\n  ]\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2 - Tests d'erreur",
+      "item": [
+        {
+          "name": "2.1 - Commande avec user inexistant",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8083/api/v1/orders",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8083",
+              "path": ["api", "v1", "orders"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": 999,\n  \"shippingAddress\": \"Adresse invalide\",\n  \"items\": [\n    {\n      \"productId\": 1,\n      \"quantity\": 1\n    }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "2.2 - Commande avec produit en rupture",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8083/api/v1/orders",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8083",
+              "path": ["api", "v1", "orders"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": 1,\n  \"shippingAddress\": \"10 rue de Paris\",\n  \"items\": [\n    {\n      \"productId\": 1,\n      \"quantity\": 999\n    }\n  ]\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3 - Tests Happy Path (par endpoint)",
+      "item": [
+        {
+          "name": "3.1 - Lister les utilisateurs",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:8081/api/v1/users",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8081",
+              "path": ["api", "v1", "users"]
+            }
+          }
+        },
+        {
+          "name": "3.2 - Lister les produits",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:8082/api/v1/products",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8082",
+              "path": ["api", "v1", "products"]
+            }
+          }
+        },
+        {
+          "name": "3.3 - Lister les commandes",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:8083/api/v1/orders",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8083",
+              "path": ["api", "v1", "orders"]
+            }
+          }
+        },
+        {
+          "name": "3.4 - Annuler une commande",
+          "request": {
+            "method": "PATCH",
+            "url": {
+              "raw": "http://localhost:8083/api/v1/orders/1/cancel",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8083",
+              "path": ["api", "v1", "orders", "1", "cancel"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

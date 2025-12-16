@@ -54,12 +54,7 @@ La plateforme est une architecture microservices destinée à gérer un système
          │                                      │
          └──────────────────────────────────────┘
 
-┌─────────────────────────────────────────────────────────────┐
-│            Shared Infrastructure (Monitoring)                │
-│  • Spring Boot Actuator (/actuator/health)                  │
-│  • Health Indicators (Stock, External Services)             │
-│  • Exception Handling (Global Exception Handlers)           │
-└─────────────────────────────────────────────────────────────┘
+
 ```
 
 ---
@@ -79,58 +74,68 @@ Chaque microservice suit l'architecture en 4 couches :
 
 **Exemple** : `ProductController`
 ```
-GET    /api/v1/products              → getAllProducts()
-POST   /api/v1/products              → createProduct(dto)
-GET    /api/v1/products/{id}         → getProductById(id)
-PUT    /api/v1/products/{id}         → updateProduct(id, dto)
-PATCH  /api/v1/products/{id}/stock   → updateStock(id, dto)
-DELETE /api/v1/products/{id}         → deleteProduct(id)
-GET    /api/v1/products/search       → searchByName(name)
-GET    /api/v1/products/category/{cat} → getByCategory(cat)
-GET    /api/v1/products/available    → getAvailableProducts()
+GET    /api/v1/products
+POST   /api/v1/products
+GET    /api/v1/products/{id}
+PUT    /api/v1/products/{id}
+PATCH  /api/v1/products/{id}/stock
+DELETE /api/v1/products/{id}
+
 ```
 
 ### 3.2 Couche Application
-**Responsabilité** : Logique métier, transformations données
+Responsabilité : logique métier et orchestration
 
-**Composants** :
-- `*Service` : Logique métier transactionnelle
-- `*DTO` : Objets de transfert de données
-- `*Mapper` : Conversion Entity ↔ DTO
-- `*Repository` : Accès aux données
+Composants :
 
-**Exemple** : `ProductService`
-- Validation des données
-- Transformation DTO → Entity
-- Gestion des transactions
-- Logging des opérations
+*Service
+
+*DTO
+
+*Mapper
+
+Gestion transactionnelle (@Transactional)
+
+Rôles clés :
+
+Validation métier
+
+Appels inter-services
+
+Calculs (prix, stock, statuts)
+
+Gestion des erreurs
 
 ### 3.3 Couche Domaine
-**Responsabilité** : Modèle métier pur
+Responsabilité : modèle métier pur
 
-**Composants** :
-- `*Entity` : Entités JPA avec `@Entity`
-- `*Enum` : Énumérations métier (ex: `ProductCategory`)
-- `*Repository` (interface) : Contrats d'accès données
+Composants :
 
-**Exemple** : Entité `Product`
+Entités JPA (@Entity)
+
+Enums métier
+
+Interfaces Repository
+
+Exemple – Product Entity :
 ```java
 @Entity
 @Table(name = "products")
 public class Product {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
+
     @Column(nullable = false)
     private String name;
-    
+
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private ProductCategory category;  // Type-safe
-    
+    private ProductCategory category;
+
     private Integer quantity;
     private Double price;
 }
+
 ```
 
 ### 3.4 Couche Infrastructure
@@ -150,32 +155,18 @@ public class Product {
 ### 4.1 Cas d'Usage : Créer une Commande
 
 ```
-Client HTTP
-    ↓
-OrderController.createOrder(OrderRequestDTO)
-    ↓
-OrderService.createOrder(dto)
-    ├─→ userClient.userExists(userId)
-    │      └─→ HTTP GET http://localhost:8080/api/v1/users/{userId}
-    │          (ms-membership valide l'utilisateur)
-    │
-    ├─→ Pour chaque item :
-    │   ├─→ productClient.productExists(productId)
-    │   │      └─→ HTTP GET http://localhost:8082/api/v1/products/{productId}
-    │   │
-    │   └─→ productClient.hasEnoughStock(productId, quantity)
-    │          └─→ HTTP GET avec param quantity
-    │
-    ├─→ Déduction du stock pour chaque produit :
-    │   └─→ productClient.updateStock(productId, -quantity)
-    │          └─→ HTTP PATCH http://localhost:8082/api/v1/products/{id}/stock
-    │
-    ├─→ Création Order entity
-    ├─→ Sauvegarde en BDD
-    └─→ Retour OrderResponseDTO au client
+Client
+ ↓
+OrderController
+ ↓
+OrderService
+ ├─ Vérification utilisateur (ms-membership)
+ ├─ Vérification produits (ms-product)
+ ├─ Validation du stock
+ ├─ Déduction du stock
+ ├─ Création commande
+ └─ Réponse OrderResponseDTO
 
-    ✅ Succès : Order créée avec status PENDING
-    ❌ Erreur : Exception + restoration du stock
 ```
 
 ### 4.2 Dépendances de Communication
@@ -202,7 +193,6 @@ public enum ProductCategory {
     
     private final String displayName;
     
-    // Conversion sécurisée depuis String
     public static ProductCategory fromString(String value) {
         try {
             return ProductCategory.valueOf(value.toUpperCase());
