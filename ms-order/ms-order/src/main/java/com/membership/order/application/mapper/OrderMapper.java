@@ -1,12 +1,12 @@
 package com.membership.order.application.mapper;
 
-import com.membership.order.application.dto.*;
+import com.membership.order.application.dto.OrderItemResponseDTO;
+import com.membership.order.application.dto.OrderRequestDTO;
+import com.membership.order.application.dto.OrderResponseDTO;
 import com.membership.order.domain.entity.Order;
 import com.membership.order.domain.entity.OrderItem;
-import com.membership.order.domain.entity.OrderStatus;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -19,58 +19,44 @@ public class OrderMapper {
         Order order = new Order();
         order.setUserId(dto.getUserId());
         order.setShippingAddress(dto.getShippingAddress());
-        order.setOrderDate(LocalDateTime.now());
-        order.setStatus(OrderStatus.PENDING);
-        order.setCreatedAt(LocalDateTime.now());
-        order.setUpdatedAt(LocalDateTime.now());
+        order.setItems(new ArrayList<>());
 
-        BigDecimal total = BigDecimal.ZERO;
-
-        for (OrderItemRequestDTO itemDto : dto.getItems()) {
-            OrderItem item = new OrderItem();
-            item.setProductId(itemDto.getProductId());
-            item.setProductName(itemDto.getProductName());
-            item.setQuantity(itemDto.getQuantity());
-            item.setUnitPrice(itemDto.getUnitPrice());
-            BigDecimal subtotal = itemDto.getUnitPrice()
-                    .multiply(BigDecimal.valueOf(itemDto.getQuantity()));
-            item.setSubtotal(subtotal);
-
-            order.addItem(item);
-            total = total.add(subtotal);
-        }
-
-        order.setTotalAmount(total);
         return order;
     }
 
     public static OrderResponseDTO toResponse(Order order) {
-        List<OrderItemResponseDTO> items = order.getItems()
-                .stream()
+        OrderResponseDTO dto = new OrderResponseDTO();
+
+        dto.setId(order.getId());
+        dto.setUserId(order.getUserId());
+        dto.setOrderDate(order.getOrderDate());
+        dto.setStatus(order.getStatus());
+        dto.setTotalAmount(order.getTotalAmount());
+        dto.setShippingAddress(order.getShippingAddress());
+        dto.setCreatedAt(order.getCreatedAt());
+        dto.setUpdatedAt(order.getUpdatedAt());
+
+        List<OrderItemResponseDTO> items = order.getItems() == null
+                ? List.of()
+                : order.getItems().stream()
                 .map(OrderMapper::toItemResponse)
                 .collect(Collectors.toList());
 
-        return new OrderResponseDTO(
-                order.getId(),
-                order.getUserId(),
-                order.getOrderDate(),
-                order.getStatus(),
-                order.getTotalAmount(),
-                order.getShippingAddress(),
-                order.getCreatedAt(),
-                order.getUpdatedAt(),
-                items
-        );
+        dto.setItems(items);
+
+        return dto;
     }
 
     private static OrderItemResponseDTO toItemResponse(OrderItem item) {
-        return new OrderItemResponseDTO(
-                item.getId(),
-                item.getProductId(),
-                item.getProductName(),
-                item.getQuantity(),
-                item.getUnitPrice(),
-                item.getSubtotal()
-        );
+        OrderItemResponseDTO dto = new OrderItemResponseDTO();
+
+        dto.setId(item.getId());
+        dto.setProductId(item.getProductId());
+        dto.setProductName(item.getProductName());
+        dto.setQuantity(item.getQuantity());
+        dto.setUnitPrice(item.getUnitPrice());
+        dto.setSubtotal(item.getSubtotal());
+
+        return dto;
     }
 }

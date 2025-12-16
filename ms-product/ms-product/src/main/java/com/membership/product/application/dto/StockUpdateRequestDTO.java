@@ -1,17 +1,13 @@
 package com.membership.product.application.dto;
 
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import lombok.Data;
 
+@Data
 public class StockUpdateRequestDTO {
 
     @NotNull
-    private Integer quantityChange; // positif ou négatif
-
-    public Integer getQuantityChange() {
-        return quantityChange;
-    }
-
-    public void setQuantityChange(Integer quantityChange) {
-        this.quantityChange = quantityChange;
-    }
+    @Min(0)
+    private Integer newStock;
 }

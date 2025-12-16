@@ -1,97 +1,80 @@
 package com.membership.product.application.service;
-import com.membership.product.infrastructure.exception.ResourceNotFoundException;
 
-import com.membership.product.application.dto.ProductRequestDTO;
-import com.membership.product.application.dto.ProductResponseDTO;
-import com.membership.product.application.mapper.ProductMapper;
 import com.membership.product.domain.entity.Product;
 import com.membership.product.domain.entity.ProductCategory;
 import com.membership.product.domain.repository.ProductRepository;
+import com.membership.product.infrastructure.exception.ResourceNotFoundException;
+import com.membership.product.infrastructure.metrics.ProductMetrics;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional
 public class ProductService {
 
-    private final ProductRepository productRepository;
+    private final ProductRepository repository;
+    private final ProductMetrics productMetrics;
 
-    public ProductService(ProductRepository productRepository) {
-        this.productRepository = productRepository;
+    public ProductService(ProductRepository repository,
+                          ProductMetrics productMetrics) {
+        this.repository = repository;
+        this.productMetrics = productMetrics;
     }
 
-    public List<ProductResponseDTO> getAllProducts() {
-        return productRepository.findAll()
-                .stream()
-                .map(ProductMapper::toResponse)
-                .collect(Collectors.toList());
+    public List<Product> findAll() {
+        return repository.findAll();
     }
 
-    public ProductResponseDTO createProduct(ProductRequestDTO dto) {
-        Product product = ProductMapper.toEntity(dto);
-        Product saved = productRepository.save(product);
-        return ProductMapper.toResponse(saved);
+    public Product create(Product product) {
+        Product saved = repository.save(product);
+
+        productMetrics.incrementProductCreated(saved.getCategory());
+
+        return saved;
     }
-    public ProductResponseDTO getProductById(Long id) {
-    Product product = productRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Product", "id", id));
-    return ProductMapper.toResponse(product);
-}
-public ProductResponseDTO updateProduct(Long id, ProductRequestDTO dto) {
-    Product existing = productRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Product", "id", id));
 
-    ProductMapper.updateEntity(existing, dto);
-    Product updated = productRepository.save(existing);
-    return ProductMapper.toResponse(updated);
-}
-public List<ProductResponseDTO> searchByName(String name) {
-    return productRepository.findByNameContainingIgnoreCase(name)
-            .stream()
-            .map(ProductMapper::toResponse)
-            .collect(Collectors.toList());
-}
-public List<ProductResponseDTO> getByCategory(String category) {
-    ProductCategory productCategory = ProductCategory.fromString(category);
-    return productRepository.findByCategory(productCategory)
-            .stream()
-            .map(ProductMapper::toResponse)
-            .collect(Collectors.toList());
-}
-public List<ProductResponseDTO> getAvailableProducts() {
-    return productRepository.findByStockGreaterThanAndActiveTrue(0)
-            .stream()
-            .map(ProductMapper::toResponse)
-            .collect(Collectors.toList());
-}
-public ProductResponseDTO updateStock(Long id, int quantityChange) {
-    Product product = productRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Product", "id", id));
-
-    int newStock = product.getStock() + quantityChange;
-    if (newStock < 0) {
-        throw new IllegalArgumentException("Stock cannot be negative");
+    public Product findById(Long id) {
+        return repository.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Product", "id", id));
     }
-    product.setStock(newStock);
-    product.setUpdatedAt(java.time.LocalDateTime.now());
-    Product saved = productRepository.save(product);
-    return ProductMapper.toResponse(saved);
-}
 
-/**
- * Supprime un produit par son ID.
- * 
- * @param id l'identifiant du produit
- * @throws ResourceNotFoundException si le produit n'existe pas
- */
-public void deleteProduct(Long id) {
-    Product product = productRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Product", "id", id));
-    
-    productRepository.delete(product);
-}
+    public Product update(Long id, Product updated) {
+        Product existing = findById(id);
+        existing.setName(updated.getName());
+        existing.setDescription(updated.getDescription());
+        existing.setPrice(updated.getPrice());
+        existing.setStock(updated.getStock());
+        existing.setCategory(updated.getCategory());
+        existing.setImageUrl(updated.getImageUrl());
+        return existing;
+    }
 
+    public List<Product> searchByName(String name) {
+        return repository.findByNameContainingIgnoreCase(name);
+    }
+
+    public List<Product> findByCategory(ProductCategory category) {
+        return repository.findByCategory(category);
+    }
+
+    public List<Product> available() {
+        return repository.findByStockGreaterThanAndActiveTrue(0);
+    }
+
+    public void updateStock(Long id, Integer newStock) {
+        if (newStock < 0) {
+            throw new IllegalArgumentException("Stock cannot be negative");
+        }
+        Product product = findById(id);
+        product.setStock(newStock);
+    }
+
+    public void delete(Long id) {
+        Product product = findById(id);
+        throw new IllegalStateException(
+                "Product cannot be deleted if it is part of an order");
+    }
 }

@@ -2,9 +2,11 @@ package com.membership.order.application.dto;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import lombok.Data;
+import lombok.Getter;
 
-import java.math.BigDecimal;
-
+@Data
+@Getter
 public class OrderItemRequestDTO {
 
     @NotNull
@@ -14,41 +16,4 @@ public class OrderItemRequestDTO {
     @Min(1)
     private Integer quantity;
 
-    @NotNull
-    private BigDecimal unitPrice;
-
-    @NotNull
-    private String productName;
-
-    public Long getProductId() {
-        return productId;
-    }
-
-    public void setProductId(Long productId) {
-        this.productId = productId;
-    }
-
-    public Integer getQuantity() {
-        return quantity;
-    }
-
-    public void setQuantity(Integer quantity) {
-        this.quantity = quantity;
-    }
-
-    public BigDecimal getUnitPrice() {
-        return unitPrice;
-    }
-
-    public void setUnitPrice(BigDecimal unitPrice) {
-        this.unitPrice = unitPrice;
-    }
-
-    public String getProductName() {
-        return productName;
-    }
-
-    public void setProductName(String productName) {
-        this.productName = productName;
-    }
 }

@@ -2,9 +2,12 @@ package com.membership.product.application.dto;
 
 import com.membership.product.domain.entity.ProductCategory;
 import jakarta.validation.constraints.*;
+import lombok.Data;
+
 
 import java.math.BigDecimal;
 
+@Data
 public class ProductRequestDTO {
 
     @NotBlank
@@ -29,53 +32,5 @@ public class ProductRequestDTO {
 
     private String imageUrl;
 
-    // Getters / Setters
 
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public BigDecimal getPrice() {
-        return price;
-    }
-
-    public void setPrice(BigDecimal price) {
-        this.price = price;
-    }
-
-    public Integer getStock() {
-        return stock;
-    }
-
-    public void setStock(Integer stock) {
-        this.stock = stock;
-    }
-
-    public ProductCategory getCategory() {
-        return category;
-    }
-
-    public void setCategory(ProductCategory category) {
-        this.category = category;
-    }
-
-    public String getImageUrl() {
-        return imageUrl;
-    }
-
-    public void setImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
-    }
 }

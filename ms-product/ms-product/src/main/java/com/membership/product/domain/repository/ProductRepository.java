@@ -13,4 +13,6 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     List<Product> findByCategory(ProductCategory category);
 
     List<Product> findByStockGreaterThanAndActiveTrue(int stock);
+
+    long countByStockLessThan(int stock);
 }

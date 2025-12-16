@@ -3,9 +3,11 @@ package com.membership.order.application.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import lombok.Data;
 
 import java.util.List;
 
+@Data
 public class OrderRequestDTO {
 
     @NotNull
@@ -17,27 +19,4 @@ public class OrderRequestDTO {
     @NotEmpty
     private List<OrderItemRequestDTO> items;
 
-    public Long getUserId() {
-        return userId;
-    }
-
-    public void setUserId(Long userId) {
-        this.userId = userId;
-    }
-
-    public String getShippingAddress() {
-        return shippingAddress;
-    }
-
-    public void setShippingAddress(String shippingAddress) {
-        this.shippingAddress = shippingAddress;
-    }
-
-    public List<OrderItemRequestDTO> getItems() {
-        return items;
-    }
-
-    public void setItems(List<OrderItemRequestDTO> items) {
-        this.items = items;
-    }
 }

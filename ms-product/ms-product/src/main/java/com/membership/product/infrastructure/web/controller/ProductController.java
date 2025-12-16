@@ -2,13 +2,10 @@ package com.membership.product.infrastructure.web.controller;
 
 import com.membership.product.application.dto.ProductRequestDTO;
 import com.membership.product.application.dto.ProductResponseDTO;
+import com.membership.product.application.mapper.ProductMapper;
 import com.membership.product.application.service.ProductService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import com.membership.product.domain.entity.Product;
+import com.membership.product.domain.entity.ProductCategory;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -18,141 +15,103 @@ import com.membership.product.application.dto.StockUpdateRequestDTO;
 
 import java.util.List;
 
-/**
- * Contrôleur REST pour la gestion des produits.
- * Expose tous les endpoints CRUD et les opérations de recherche.
- */
+
 @RestController
 @RequestMapping("/api/v1/products")
 @Tag(name = "Products", description = "API de gestion des produits")
 public class ProductController {
 
     private final ProductService productService;
+    private final ProductMapper mapper;
 
-    public ProductController(ProductService productService) {
+    public ProductController(ProductService productService, ProductMapper mapper) {
         this.productService = productService;
+        this.mapper = mapper;
     }
 
-    /**
-     * Récupère la liste de tous les produits.
-     */
     @GetMapping
-    @Operation(summary = "Récupérer tous les produits", description = "Retourne la liste complète des produits")
-    @ApiResponse(responseCode = "200", description = "Liste des produits récupérée avec succès")
     public ResponseEntity<List<ProductResponseDTO>> getAllProducts() {
-        List<ProductResponseDTO> products = productService.getAllProducts();
-        return ResponseEntity.ok(products);
+        return ResponseEntity.ok(
+                productService.findAll()
+                        .stream()
+                        .map(mapper::toResponse)
+                        .toList()
+        );
     }
 
-    /**
-     * Crée un nouveau produit.
-     */
     @PostMapping
-    @Operation(summary = "Créer un nouveau produit", description = "Crée et retourne un nouveau produit")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "201", description = "Produit créé avec succès"),
-        @ApiResponse(responseCode = "400", description = "Erreur de validation des données")
-    })
-    public ResponseEntity<ProductResponseDTO> createProduct(@Valid @RequestBody ProductRequestDTO dto) {
-        ProductResponseDTO created = productService.createProduct(dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
-    }
-
-    /**
-     * Récupère un produit par son ID.
-     */
-    @GetMapping("/{id}")
-    @Operation(summary = "Récupérer un produit par ID", description = "Retourne un produit spécifique")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Produit récupéré avec succès"),
-        @ApiResponse(responseCode = "404", description = "Produit non trouvé")
-    })
-    public ResponseEntity<ProductResponseDTO> getProductById(
-            @PathVariable @Parameter(description = "ID du produit") Long id) {
-        ProductResponseDTO product = productService.getProductById(id);
-        return ResponseEntity.ok(product);
-    }
-
-    /**
-     * Met à jour un produit existant.
-     */
-    @PutMapping("/{id}")
-    @Operation(summary = "Mettre à jour un produit", description = "Met à jour un produit existant")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Produit mis à jour avec succès"),
-        @ApiResponse(responseCode = "404", description = "Produit non trouvé"),
-        @ApiResponse(responseCode = "400", description = "Erreur de validation des données")
-    })
-    public ResponseEntity<ProductResponseDTO> updateProduct(
-            @PathVariable @Parameter(description = "ID du produit") Long id,
+    public ResponseEntity<ProductResponseDTO> createProduct(
             @Valid @RequestBody ProductRequestDTO dto) {
-        ProductResponseDTO updated = productService.updateProduct(id, dto);
-        return ResponseEntity.ok(updated);
+
+        Product product = mapper.toEntity(dto);
+        Product saved = productService.create(product);
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(mapper.toResponse(saved));
     }
 
-    /**
-     * Recherche les produits par nom.
-     */
+    @GetMapping("/{id}")
+    public ResponseEntity<ProductResponseDTO> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(
+                mapper.toResponse(productService.findById(id))
+        );
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ProductResponseDTO> updateProduct(
+            @PathVariable Long id,
+            @Valid @RequestBody ProductRequestDTO dto) {
+
+        Product updated = mapper.toEntity(dto);
+        return ResponseEntity.ok(
+                mapper.toResponse(productService.update(id, updated))
+        );
+    }
+
     @GetMapping("/search")
-    @Operation(summary = "Rechercher des produits par nom", description = "Retourne les produits correspondant au nom")
-    @ApiResponse(responseCode = "200", description = "Résultats de recherche récupérés")
-    public ResponseEntity<List<ProductResponseDTO>> searchProductsByName(
-            @RequestParam @Parameter(description = "Nom du produit à rechercher") String name) {
-        List<ProductResponseDTO> products = productService.searchByName(name);
-        return ResponseEntity.ok(products);
+    public ResponseEntity<List<ProductResponseDTO>> search(@RequestParam String name) {
+        return ResponseEntity.ok(
+                productService.searchByName(name)
+                        .stream()
+                        .map(mapper::toResponse)
+                        .toList()
+        );
     }
 
-    /**
-     * Récupère les produits par catégorie.
-     */
     @GetMapping("/category/{category}")
-    @Operation(summary = "Récupérer les produits par catégorie", description = "Retourne les produits d'une catégorie")
-    @ApiResponse(responseCode = "200", description = "Produits de la catégorie récupérés")
-    public ResponseEntity<List<ProductResponseDTO>> getByCategory(
-            @PathVariable @Parameter(description = "Catégorie (ELECTRONICS, BOOKS, FOOD, OTHER)") String category) {
-        List<ProductResponseDTO> products = productService.getByCategory(category);
-        return ResponseEntity.ok(products);
+    public ResponseEntity<List<ProductResponseDTO>> byCategory(
+            @PathVariable ProductCategory category) {
+
+        return ResponseEntity.ok(
+                productService.findByCategory(category)
+                        .stream()
+                        .map(mapper::toResponse)
+                        .toList()
+        );
     }
 
-    /**
-     * Récupère les produits disponibles (stock > 0).
-     */
     @GetMapping("/available")
-    @Operation(summary = "Récupérer les produits disponibles", description = "Retourne les produits en stock")
-    @ApiResponse(responseCode = "200", description = "Produits disponibles récupérés")
-    public ResponseEntity<List<ProductResponseDTO>> getAvailableProducts() {
-        List<ProductResponseDTO> products = productService.getAvailableProducts();
-        return ResponseEntity.ok(products);
+    public ResponseEntity<List<ProductResponseDTO>> available() {
+        return ResponseEntity.ok(
+                productService.available()
+                        .stream()
+                        .map(mapper::toResponse)
+                        .toList()
+        );
     }
 
-    /**
-     * Met à jour le stock d'un produit.
-     */
     @PatchMapping("/{id}/stock")
-    @Operation(summary = "Mettre à jour le stock", description = "Augmente ou diminue le stock d'un produit")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Stock mis à jour"),
-        @ApiResponse(responseCode = "404", description = "Produit non trouvé")
-    })
-    public ResponseEntity<ProductResponseDTO> updateStock(
-            @PathVariable @Parameter(description = "ID du produit") Long id,
+    public ResponseEntity<Void> updateStock(
+            @PathVariable Long id,
             @Valid @RequestBody StockUpdateRequestDTO dto) {
-        ProductResponseDTO updated = productService.updateStock(id, dto.getQuantityChange());
-        return ResponseEntity.ok(updated);
+
+        productService.updateStock(id, dto.getNewStock());
+        return ResponseEntity.noContent().build();
     }
 
-    /**
-     * Supprime un produit.
-     */
     @DeleteMapping("/{id}")
-    @Operation(summary = "Supprimer un produit", description = "Supprime un produit existant")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "204", description = "Produit supprimé avec succès"),
-        @ApiResponse(responseCode = "404", description = "Produit non trouvé")
-    })
-    public ResponseEntity<Void> deleteProduct(
-            @PathVariable @Parameter(description = "ID du produit à supprimer") Long id) {
-        productService.deleteProduct(id);
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        productService.delete(id);
         return ResponseEntity.noContent().build();
     }
 }
