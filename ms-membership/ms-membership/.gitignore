@@ -1,8 +1,17 @@
 HELP.md
+
+# Maven
 target/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
+
+
+# Private keys
+**/private_key.pem
+**/*private*.pem
+
+
 
 ### STS ###
 .apt_generated
